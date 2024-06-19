@@ -31,7 +31,7 @@ Make sure you have the following tools installed:
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/your-username/your-repo-name.git
+    git clone https://github.com/YoussefAlsaeed/OMS-Slash.git
     cd your-repo-name
     ```
 
