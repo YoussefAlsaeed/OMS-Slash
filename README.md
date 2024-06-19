@@ -17,7 +17,6 @@ Make sure you have the following tools installed:
 - Node.js (>= 14.x)
 - npm (>= 6.x)
 - PostgreSQL (>= 12.x)
-- Prisma CLI (>= 3.x)
 
 ### Backend Framework
 - **NestJS**: A progressive Node.js framework for building efficient, reliable, and scalable server-side applications.
