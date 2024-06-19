@@ -20,16 +20,18 @@ export class OrdersController {
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiParam({ name: 'orderId', type: Number })
   @Get(':orderId')
-  async getOrderById(@Param('orderId') orderId: number) {
-    return this.ordersService.getOrderById(orderId);
+  async getOrderById(@Param('orderId') orderId: string) {
+    const parsedOrderId = parseInt(orderId, 10); 
+    return this.ordersService.getOrderById(parsedOrderId);
   }
 
   @ApiOperation({ summary: 'Update order status' })
-  @ApiParam({ name: 'orderId', type: Number })
+  @ApiParam({ name: 'orderId', type: String })
   @ApiBody({ description: 'Status to update', type: UpdateOrderStatusDto })
   @Put(':orderId/status')
-  async updateOrderStatus(@Param('orderId') orderId: number, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
-    return this.ordersService.updateOrderStatus(orderId, updateOrderStatusDto);
+  async updateOrderStatus(@Param('orderId') orderId: string, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
+    const parsedOrderId = parseInt(orderId, 10); 
+    return this.ordersService.updateOrderStatus(parsedOrderId, updateOrderStatusDto);
   }
 
   @ApiOperation({ summary: 'Apply coupon to order' })

@@ -22,8 +22,9 @@ export class CartController {
   @ApiOperation({ summary: 'View cart' })
   @ApiParam({ name: 'userId', type: Number })
   @Get(':userId')
-  async getCart(@Param('userId') userId: number) {
-    return this.cartService.getCart(userId);
+  async getCart(@Param('userId') userId: string) {
+    const parsedUserId = parseInt(userId, 10); 
+    return this.cartService.getCart(parsedUserId);
   }
 
   @ApiOperation({ summary: 'Update cart' })

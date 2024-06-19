@@ -10,31 +10,38 @@ export class CartService {
 
   async addToCart(addToCartDto: AddToCartDto) {
     const { userId, productId, quantity } = addToCartDto;
-
+  
     // Check if the cart item already exists
-    const existingCartItem = await this.prisma.cartItem.findFirst({
+    let cartItem = await this.prisma.cartItem.findFirst({
       where: {
-        cartId: userId,
-        productId,
+        cart: {
+          userId: userId  // This should match the userId of the cart
+        },
+        productId: productId
       },
     });
-
-    if (existingCartItem) {
+  
+    if (cartItem) {
+      // If the cart item exists, update the quantity
+      const newQuantity = cartItem.quantity + quantity;
       return this.prisma.cartItem.update({
-        where: { id: existingCartItem.id },
-        data: { quantity: existingCartItem.quantity + quantity },
+        where: { id: cartItem.id },
+        data: { quantity: newQuantity },
       });
+    } else {
+      // If the cart item doesn't exist, create a new one
+      cartItem = await this.prisma.cartItem.create({
+        data: {
+          cart: { connect: { userId } },  // Connecting to the user's cart via userId
+          product: { connect: { productId } },
+          quantity,
+        },
+      });
+  
+      return cartItem;
     }
-
-    // If the cart item doesn't exist, create a new one
-    return this.prisma.cartItem.create({
-      data: {
-        cart: { connect: { userId } },
-        product: { connect: { productId } },
-        quantity,
-      },
-    });
   }
+  
 
   async getCart(userId: number) {
     return this.prisma.cart.findUnique({
@@ -67,7 +74,6 @@ export class CartService {
   async removeFromCart(removeFromCartDto: RemoveFromCartDto) {
     const { userId, productId } = removeFromCartDto;
 
-    // Find the cart item to remove
     const cartItem = await this.prisma.cartItem.findFirst({
       where: {
         cartId: userId,

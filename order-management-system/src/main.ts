@@ -42,16 +42,30 @@ async function seedDatabase() {
     for (const user of users) {
       const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
       if (!existingUser) {
-        await prisma.user.create({ data: user });
-        console.log(`User '${user.name}' added.`);
+        // Create the user and their cart
+        const newUser = await prisma.user.create({
+          data: {
+            name: user.name,
+            email: user.email,
+            password: user.password,
+            address: user.address,
+            Cart: {
+              create: {} // Create an empty cart initially
+            }
+          },
+          include: {
+            Cart: true // Ensure Cart is included in the response
+          }
+        });
+        console.log(`User '${newUser.name}' added with cart.`);
       } else {
-        console.log(`User '${user.name}' already exists, skipping.`);
+        console.log(`User '${existingUser.name}' already exists, skipping.`);
       }
     }
 
     for (const product of products) {
-      const existingProduct = await prisma.product.findMany({ where: { name: product.name } });
-      if (!existingProduct) {
+      const existingProducts = await prisma.product.findMany({ where: { name: product.name } });
+      if (existingProducts.length === 0) {
         await prisma.product.create({ data: product });
         console.log(`Product '${product.name}' added.`);
       } else {

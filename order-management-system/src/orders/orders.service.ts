@@ -3,7 +3,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ApplyCouponDto } from './dto/apply-coupon.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderStatus } from './enums/order-status.enum'; 
 
 @Injectable()
 export class OrdersService {
@@ -11,25 +10,53 @@ export class OrdersService {
 
   async createOrder(createOrderDto: CreateOrderDto) {
     const { userId } = createOrderDto;
+
+    // Fetch the user's cart with items included
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
       include: { items: { include: { product: true } } },
     });
 
+    // Calculate total price and create order
     const order = await this.prisma.order.create({
       data: {
         userId,
-        status: OrderStatus.Pending, 
+        status: 'pending',
         items: {
-          create: cart.items.map(item => ({
+          create: cart.items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
             price: item.product.price,
           })),
         },
       },
+      include: { items: true }, // Include items in response for further processing
     });
 
+    // Update product stock after creating order
+    await Promise.all(
+      cart.items.map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { productId: item.productId },
+        });
+
+        if (!product) {
+          throw new NotFoundException(`Product with ID ${item.productId} not found.`);
+        }
+
+        // Update product stock
+        await this.prisma.product.update({
+          where: { productId: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity, // Decrement stock by quantity ordered
+            },
+          },
+        });
+      })
+    );
+
+    // Clear user's cart after order creation
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.cartId } });
 
     return order;
@@ -50,16 +77,6 @@ export class OrdersService {
 
   async updateOrderStatus(orderId: number, updateOrderStatusDto: UpdateOrderStatusDto) {
     const { status } = updateOrderStatusDto;
-
-    // Check if the order exists
-    const order = await this.prisma.order.findUnique({
-      where: { orderId },
-    });
-
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${orderId} not found`);
-    }
-
     return this.prisma.order.update({
       where: { orderId },
       data: { status },
@@ -89,13 +106,13 @@ export class OrdersService {
       include: { items: true },
     });
 
-    const updatedItems = order.items.map(item => ({
+    const updatedItems = order.items.map((item) => ({
       ...item,
       price: item.price - item.price * discount,
     }));
 
     await Promise.all(
-      updatedItems.map(item =>
+      updatedItems.map((item) =>
         this.prisma.orderItem.update({
           where: { id: item.id },
           data: { price: item.price },
