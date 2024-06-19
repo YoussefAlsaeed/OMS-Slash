@@ -78,23 +78,28 @@ Make sure you have the following tools installed:
    http://localhost:3000/api
 
 ## Initial Data
-    Users
-    | Name           | Email                       | Address      |
+
+Database is filled initially with this data for testing purposes.
+
+Users
+
+| Name           | Email                       | Address      |
 |----------------|-----------------------------|--------------|
 | Youssef Alsaeed| youssef.alsaeed@example.com | 123 Main St  |
 | Ahmed Smith    | ahmed.smith@example.com     | 456 New St   |
 | John Cena      | john.cena@example.com       | 789 Old St   |
 
-    Products
+Products
 
-    | Name           | Description                | Price | Stock |
+| Name           | Description                | Price | Stock |
 |----------------|----------------------------|-------|-------|
 | Denim Jacket   | Crafted from premium denim | 19.99 | 100   |
 | Striped Sweater| Knitted from soft cotton yarn | 29.99 | 50    |
 | Hiking Boots   | Waterproof and durable     | 15.99 | 100   |
 
 
-    Coupons
+Coupons
+
 | Code     | Percentage | Valid Until |
 |----------|-------------|-------------|
 | SUMMER25 | 25%         | 2024-12-31  |
