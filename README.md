@@ -32,7 +32,7 @@ Make sure you have the following tools installed:
 1. **Clone the repository:**
     ```sh
     git clone https://github.com/YoussefAlsaeed/OMS-Slash.git
-    cd your-repo-name
+    cd order-management-system
     ```
 
 2. **Install dependencies:**
