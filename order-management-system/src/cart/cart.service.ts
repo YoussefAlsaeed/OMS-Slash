@@ -52,41 +52,65 @@ export class CartService {
 
   async updateCart(updateCartDto: UpdateCartDto) {
     const { userId, productId, quantity } = updateCartDto;
-
+  
+    // Find the user's cart
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId: userId },
+      include: { items: true },
+    });
+  
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+  
     // Find the cart item to update
     const cartItem = await this.prisma.cartItem.findFirst({
       where: {
-        cartId: userId,
+        cartId: cart.cartId,
         productId,
       },
     });
-
+  
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
-
+  
+    // Update the cart item quantity
     return this.prisma.cartItem.update({
       where: { id: cartItem.id },
       data: { quantity },
     });
   }
-
+  
   async removeFromCart(removeFromCartDto: RemoveFromCartDto) {
     const { userId, productId } = removeFromCartDto;
-
+  
+    // Find the user's cart
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId: userId },
+      include: { items: true },
+    });
+  
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+  
+    // Find the cart item to remove
     const cartItem = await this.prisma.cartItem.findFirst({
       where: {
-        cartId: userId,
+        cartId: cart.cartId,
         productId,
       },
     });
-
+  
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
-
+  
+    // Remove the cart item
     return this.prisma.cartItem.delete({
       where: { id: cartItem.id },
     });
   }
+  
 }
