@@ -55,6 +55,7 @@ model Order {
   user       User       @relation(fields: [userId], references: [userId])
   userId     Int
   items      OrderItem[]
+  price      Float      
 }
 
 enum OrderStatus {
@@ -75,3 +76,9 @@ model OrderItem {
   price     Float
 }
 
+model Coupon {
+  couponId    Int      @id @default(autoincrement())
+  code        String   @unique
+  percentage  Float    // Discount percentage as a decimal (0.1 for 10%)
+  validUntil  DateTime
+}

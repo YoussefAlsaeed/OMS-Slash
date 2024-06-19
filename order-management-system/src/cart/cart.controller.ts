@@ -1,5 +1,3 @@
-// src/cart/cart.controller.ts
-
 import { Controller, Post, Get, Put, Delete, Body, Param } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';

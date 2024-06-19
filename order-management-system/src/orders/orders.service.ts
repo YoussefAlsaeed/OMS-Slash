@@ -11,17 +11,18 @@ export class OrdersService {
   async createOrder(createOrderDto: CreateOrderDto) {
     const { userId } = createOrderDto;
 
-    // Fetch the user's cart with items included
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
       include: { items: { include: { product: true } } },
     });
 
-    // Calculate total price and create order
+    const totalPrice = cart.items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+
     const order = await this.prisma.order.create({
       data: {
         userId,
         status: 'pending',
+        price: totalPrice,
         items: {
           create: cart.items.map((item) => ({
             productId: item.productId,
@@ -30,10 +31,9 @@ export class OrdersService {
           })),
         },
       },
-      include: { items: true }, // Include items in response for further processing
+      include: { items: true },
     });
 
-    // Update product stock after creating order
     await Promise.all(
       cart.items.map(async (item) => {
         const product = await this.prisma.product.findUnique({
@@ -44,19 +44,17 @@ export class OrdersService {
           throw new NotFoundException(`Product with ID ${item.productId} not found.`);
         }
 
-        // Update product stock
         await this.prisma.product.update({
           where: { productId: item.productId },
           data: {
             stock: {
-              decrement: item.quantity, // Decrement stock by quantity ordered
+              decrement: item.quantity,
             },
           },
         });
       })
     );
 
-    // Clear user's cart after order creation
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.cartId } });
 
     return order;
@@ -98,14 +96,21 @@ export class OrdersService {
 
   async applyCoupon(applyCouponDto: ApplyCouponDto) {
     const { orderId, couponCode } = applyCouponDto;
-    // Placeholder for coupon validation logic
-    const discount = await this.validateCoupon(couponCode);
+
+    const coupon = await this.prisma.coupon.findUnique({
+      where: { code: couponCode },
+    });
+
+    if (!coupon || new Date(coupon.validUntil) < new Date()) {
+      throw new NotFoundException('Invalid or expired coupon.');
+    }
 
     const order = await this.prisma.order.findUnique({
       where: { orderId },
       include: { items: true },
     });
 
+    const discount = coupon.percentage;
     const updatedItems = order.items.map((item) => ({
       ...item,
       price: item.price - item.price * discount,
@@ -120,11 +125,13 @@ export class OrdersService {
       )
     );
 
-    return { message: 'Coupon applied successfully', discount };
-  }
+    const updatedTotalPrice = updatedItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  async validateCoupon(couponCode: string): Promise<number> {
-    // Placeholder for coupon validation logic
-    return 0.1;
+    await this.prisma.order.update({
+      where: { orderId },
+      data: { price: updatedTotalPrice },
+    });
+
+    return { message: 'Coupon applied successfully', discount };
   }
 }

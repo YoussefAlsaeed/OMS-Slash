@@ -18,11 +18,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Start the NestJS application
   await app.listen(3000);
 }
 
-// Seeding function
 async function seedDatabase() {
   const prisma = new PrismaClient();
 
@@ -38,11 +36,16 @@ async function seedDatabase() {
     { name: 'Hiking Boots', description: 'Waterproof and durable', price: 15.99, stock: 100 }
   ];
 
+  const coupons = [
+    { code: 'SUMMER25', percentage: 0.25, validUntil: new Date('2024-12-31') },
+    { code: 'SLASH50', percentage: 0.50, validUntil: new Date('2024-12-31') },
+    { code: 'SLASH30', percentage: 0.30, validUntil: new Date('2024-12-31') }
+  ];
+
   try {
     for (const user of users) {
       const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
       if (!existingUser) {
-        // Create the user and their cart
         const newUser = await prisma.user.create({
           data: {
             name: user.name,
@@ -50,11 +53,11 @@ async function seedDatabase() {
             password: user.password,
             address: user.address,
             Cart: {
-              create: {} // Create an empty cart initially
+              create: {}
             }
           },
           include: {
-            Cart: true // Ensure Cart is included in the response
+            Cart: true
           }
         });
         console.log(`User '${newUser.name}' added with cart.`);
@@ -70,6 +73,16 @@ async function seedDatabase() {
         console.log(`Product '${product.name}' added.`);
       } else {
         console.log(`Product '${product.name}' already exists, skipping.`);
+      }
+    }
+
+    for (const coupon of coupons) {
+      const existingCoupon = await prisma.coupon.findUnique({ where: { code: coupon.code } });
+      if (!existingCoupon) {
+        await prisma.coupon.create({ data: coupon });
+        console.log(`Coupon '${coupon.code}' added.`);
+      } else {
+        console.log(`Coupon '${coupon.code}' already exists, skipping.`);
       }
     }
   } catch (error) {
